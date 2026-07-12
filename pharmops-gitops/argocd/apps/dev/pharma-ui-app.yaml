@@ -13,9 +13,9 @@ spec:
   project: pharma
 
   source:
-    repoURL: https://github.com/<YOUR_GITHUB_USERNAME>/pharmops-gitops.git
+    repoURL: https://github.com/aws-devopsprocloud/pharma-project.git
     targetRevision: HEAD
-    path: k8s-manifests/pharma-ui
+    path: pharmops-gitops/k8s-manifests/pharma-ui
 
   destination:
     server: https://kubernetes.default.svc

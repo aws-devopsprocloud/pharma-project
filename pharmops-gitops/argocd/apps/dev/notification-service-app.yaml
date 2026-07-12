@@ -13,9 +13,9 @@ spec:
   project: pharma
 
   source:
-    repoURL: https://github.com/<YOUR_GITHUB_USERNAME>/pharmops-gitops.git
+    repoURL: https://github.com/aws-devopsprocloud/pharma-project.git
     targetRevision: HEAD
-    path: helm-charts
+    path: pharmops-gitops/helm-charts
     helm:
       valueFiles:
         - ../envs/dev/values-notification-service.yaml
