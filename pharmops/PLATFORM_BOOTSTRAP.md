@@ -555,6 +555,10 @@ export IMAGE_TAG="v1.0.0"
 ```
 # Update Helm values files (api-gateway, auth-service, catalog-service, notification-service)
 
+```bash
+cd pharmops-gitops
+```
+
 Linux/RHEL:
 ```bash
 for svc in api-gateway auth-service drug-catalog-service notification-service; do
@@ -571,6 +575,10 @@ done
 
 # Update pharma-ui raw manifest
 
+```bash
+cd pharmops-gitops
+```
+
 Linux/RHEL:
 ```bash
 sed -i "s|image:.*pharma-ui.*|image: ${REGISTRY}/pharma-ui:${IMAGE_TAG}|" \
@@ -579,10 +587,10 @@ sed -i "s|image:.*pharma-ui.*|image: ${REGISTRY}/pharma-ui:${IMAGE_TAG}|" \
 
 macOS:
 ```bash 
-sed -i "s|image:.*pharma-ui.*|image: ${REGISTRY}/pharma-ui:${IMAGE_TAG}|" \
+sed -i '' "s|image:.*pharma-ui.*|image: ${REGISTRY}/pharma-ui:${IMAGE_TAG}|" \
   k8s-manifests/pharma-ui/deployment.yaml
 ```
-
+```
 git add .
 git commit -m "chore: set image tags to ${IMAGE_TAG} for dev"
 git push
