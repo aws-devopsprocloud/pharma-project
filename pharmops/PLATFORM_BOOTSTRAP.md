@@ -115,6 +115,7 @@ Files to update:
 | `k8s-manifests/pharma-ui/deployment.yaml` | ECR image URL |
 
 Quick replace (run from inside `pharmops-gitops`):
+
 Linux/RHEL:
 ```bash
 AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
@@ -139,6 +140,7 @@ terraform output rds_endpoint
 ```
 
 Quick replace:
+
 Linux/RHEL:
 ```bash
 RDS_ENDPOINT="<your-rds-endpoint>"
@@ -157,6 +159,7 @@ find envs/dev -name "*.yaml" -exec \
 Files to update: all files under `argocd/apps/dev/` and `argocd/projects/`
 
 Quick replace:
+
 Linux/RHEL:
 ```bash
 GITHUB_USERNAME="<your-github-username>"
@@ -186,6 +189,7 @@ Files to update:
 | `k8s-manifests/pharma-ui/ingress.yaml` | Ingress host for UI |
 
 Quick replace:
+
 Linux/RHEL:
 ```bash
 ALB_HOSTNAME="<your-alb-hostname>"
@@ -233,14 +237,14 @@ Step 8  → Verify everything is running
 
 ```bash
 # Create S3 bucket for Terraform state (bucket name must be globally unique)
-ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 
 aws s3api create-bucket \
-  --bucket pharma-tf-state-${ACCOUNT_ID} \
+  --bucket <YOUR-BUCKET-NAME>\
   --region us-east-1
 
 aws s3api put-bucket-versioning \
-  --bucket pharma-tf-state-${ACCOUNT_ID} \
+  --<YOUR-BUCKET-NAME> \
   --versioning-configuration Status=Enabled
 ```
 
@@ -435,7 +439,7 @@ kubectl run psql-init \
       "containers": [{
         "name": "psql-init",
         "image": "postgres:15-alpine",
-        "env": [{"name": "PGPASSWORD", "value": "password123"}],
+        "env": [{"name": "PGPASSWORD", "value": "<DB_PASSWORD>"}],
         "command": ["psql",
           "-h", ${RDS_ENDPOINT},
           "-U", "pharmaadmin",
@@ -455,7 +459,7 @@ kubectl run psql-check \
   --image=postgres:15-alpine \
   --namespace=dev \
   --restart=Never \
-  --env="PGPASSWORD=Password123" \
+  --env="PGPASSWORD=<PASSWORD>" \
   -- psql -h ${RDS_ENDPOINT} -U pharmaadmin -d pharmadb \
   -c "\dn"
 kubectl logs psql-check -n dev
@@ -521,7 +525,7 @@ docker buildx build --platform linux/amd64 \
   -t ${REGISTRY}/pharma-ui:${IMAGE_TAG} --push services/pharma-ui
 ```
 
-> **ECR repository names must match exactly:** `api-gateway`, `auth-service`, `catalog-service`, `notification-service`, `pharma-ui`. Note: the source directory is `drug-catalog-service` but the ECR repo and image name is `catalog-service`. If Terraform created different names, update the `repository` field in the corresponding `envs/dev/values-*.yaml` file.
+> **ECR repository names must match exactly:** `api-gateway`, `auth-service`, `drug-catalog-service`, `notification-service`, `pharma-ui`. Note: the source directory is `drug-catalog-service` but the ECR repo and image name is `catalog-service`. If Terraform created different names, update the `repository` field in the corresponding `envs/dev/values-*.yaml` file.
 
 ---
 
@@ -548,15 +552,36 @@ cd pharmops-gitops
 export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 export REGISTRY="${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com"
 export IMAGE_TAG="v1.0.0"
-
+```
 # Update Helm values files (api-gateway, auth-service, catalog-service, notification-service)
+
+Linux/RHEL:
+```bash
 for svc in api-gateway auth-service drug-catalog-service notification-service; do
   sed -i "s|tag:.*|tag: ${IMAGE_TAG}|" "envs/dev/values-${svc}.yaml"
 done
+```
+
+macOS:
+```bash
+for svc in api-gateway auth-service drug-catalog-service notification-service; do
+  sed -i '' "s|tag:.*|tag: ${IMAGE_TAG}|" "envs/dev/values-${svc}.yaml"
+done
+```
 
 # Update pharma-ui raw manifest
+
+Linux/RHEL:
+```bash
 sed -i "s|image:.*pharma-ui.*|image: ${REGISTRY}/pharma-ui:${IMAGE_TAG}|" \
   k8s-manifests/pharma-ui/deployment.yaml
+```
+
+macOS:
+```bash 
+sed -i "s|image:.*pharma-ui.*|image: ${REGISTRY}/pharma-ui:${IMAGE_TAG}|" \
+  k8s-manifests/pharma-ui/deployment.yaml
+```
 
 git add .
 git commit -m "chore: set image tags to ${IMAGE_TAG} for dev"
