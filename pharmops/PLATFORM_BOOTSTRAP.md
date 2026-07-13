@@ -109,16 +109,23 @@ Files to update:
 |------|-------------|
 | `envs/dev/values-api-gateway.yaml` | ECR image URL, IAM role ARN |
 | `envs/dev/values-auth-service.yaml` | ECR image URL |
-| `envs/dev/values-catalog-service.yaml` | ECR image URL |
+| `envs/dev/values-drug-catalog-service.yaml` | ECR image URL |
 | `envs/dev/values-notification-service.yaml` | ECR image URL |
 | `envs/dev/values-pharma-ui.yaml` | ECR image URL |
 | `k8s-manifests/pharma-ui/deployment.yaml` | ECR image URL |
 
 Quick replace (run from inside `pharmops-gitops`):
+Linux/RHEL:
 ```bash
 AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 find envs/dev k8s-manifests -name "*.yaml" -exec \
   sed -i "s/<AWS_ACCOUNT_ID>/$AWS_ACCOUNT_ID/g" {} \;
+```
+macOS:
+```bash
+AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+find envs/dev k8s-manifests -name "*.yaml" -exec \
+  sed -i '' "s/<AWS_ACCOUNT_ID>/$AWS_ACCOUNT_ID/g" {} \;
 ```
 
 ### 2.2 `<RDS_ENDPOINT>` → Your RDS hostname
@@ -127,15 +134,22 @@ Files to update: `values-auth-service.yaml`, `values-catalog-service.yaml`, `val
 
 Get it after Terraform completes:
 ```bash
-cd pharmops/pharma-devops/terraform/envs/dev
+cd pharmops/pharma-infra/terraform/envs/dev
 terraform output rds_endpoint
 ```
 
 Quick replace:
+Linux/RHEL:
 ```bash
 RDS_ENDPOINT="<your-rds-endpoint>"
 find envs/dev -name "*.yaml" -exec \
   sed -i "s/<RDS_ENDPOINT>/$RDS_ENDPOINT/g" {} \;
+```
+macOS
+```bash
+RDS_ENDPOINT="<your-rds-endpoint>"
+find envs/dev -name "*.yaml" -exec \
+  sed -i '' "s/<RDS_ENDPOINT>/$RDS_ENDPOINT/g" {} \;
 ```
 
 ### 2.3 `ravdy` → Your GitHub username
@@ -143,10 +157,17 @@ find envs/dev -name "*.yaml" -exec \
 Files to update: all files under `argocd/apps/dev/` and `argocd/projects/`
 
 Quick replace:
+Linux/RHEL:
 ```bash
 GITHUB_USERNAME="<your-github-username>"
 find argocd -name "*.yaml" -exec \
   sed -i "s/ravdy/$GITHUB_USERNAME/g" {} \;
+```
+macOS:
+```bash
+GITHUB_USERNAME="<your-github-username>"
+find argocd -name "*.yaml" -exec \
+  sed -i '' "s/ravdy/$GITHUB_USERNAME/g" {} \;
 ```
 
 ### 2.4 `<YOUR_ALB_HOSTNAME>` → Your nginx ingress ALB hostname
@@ -165,10 +186,17 @@ Files to update:
 | `k8s-manifests/pharma-ui/ingress.yaml` | Ingress host for UI |
 
 Quick replace:
+Linux/RHEL:
 ```bash
 ALB_HOSTNAME="<your-alb-hostname>"
 sed -i "s/<YOUR_ALB_HOSTNAME>/$ALB_HOSTNAME/g" envs/dev/values-api-gateway.yaml
 sed -i "s/<YOUR_ALB_HOSTNAME>/$ALB_HOSTNAME/g" k8s-manifests/pharma-ui/ingress.yaml
+```
+macOS:
+```bash
+ALB_HOSTNAME="<your-alb-hostname>"
+sed -i '' "s/<YOUR_ALB_HOSTNAME>/$ALB_HOSTNAME/g" envs/dev/values-api-gateway.yaml
+sed -i '' "s/<YOUR_ALB_HOSTNAME>/$ALB_HOSTNAME/g" k8s-manifests/pharma-ui/ingress.yaml
 ```
 
 Commit and push these changes before proceeding to Step 7.
@@ -227,7 +255,7 @@ Terraform requires two sensitive values that it will store in AWS Secrets Manage
 Create a `terraform.tfvars` file locally with your own values:
 
 ```bash
-cd pharmops/pharma-devops/terraform/envs/dev
+cd pharmops/pharma-infra/terraform/envs/dev
 
 # Create this file locally — it is gitignored and must never be committed
 cat > terraform.tfvars << 'EOF'
@@ -387,7 +415,7 @@ kubectl get pods -n ingress-nginx
 ## 8. Step 4 — Initialize Database Schemas
 
 ```bash
-cd pharmops/pharma-devops/terraform/envs/dev
+cd pharmops/pharma-infra/terraform/envs/dev
 
 # Get RDS endpoint (strip the :5432 port suffix)
 export RDS_ENDPOINT=$(terraform output -raw rds_endpoint | cut -d: -f1)
@@ -560,7 +588,7 @@ kubectl apply -f k8s/rbac/rolebindings.yaml
 # Apply ArgoCD Applications (one per service)
 kubectl apply -f argocd/apps/dev/api-gateway-app.yaml
 kubectl apply -f argocd/apps/dev/auth-service-app.yaml
-kubectl apply -f argocd/apps/dev/catalog-service-app.yaml
+kubectl apply -f argocd/apps/dev/drug-catalog-service-app.yaml
 kubectl apply -f argocd/apps/dev/notification-service-app.yaml
 kubectl apply -f argocd/apps/dev/pharma-ui-app.yaml
 ```
